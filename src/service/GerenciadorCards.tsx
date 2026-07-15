@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import CardExibicao from '../CardExibicao'; // <--- Importe seu componente
 
 interface Paciente { id: string; nome: string; }
 interface GerenciadorProps { paciente: Paciente; }
@@ -42,7 +43,6 @@ export default function GerenciadorCards({ paciente }: GerenciadorProps) {
 
   const salvarPranchaNoFirebase = async () => {
     if (listaSelecionados.length === 0) return;
-    
     setCarregando(true);
     try {
       const colRef = collection(db, 'cartoes_customizados');
@@ -56,9 +56,19 @@ export default function GerenciadorCards({ paciente }: GerenciadorProps) {
         })
       ));
       
-      mostrarFeedback("Prancha salva com sucesso!", 'sucesso');
+      const pacienteRef = doc(db, 'pacientes', paciente.id);
+      await updateDoc(pacienteRef, {
+        currentSentence: listaSelecionados.map(item => ({
+          label: item.nomeFormatado,
+          categoria: item.categoriaOrigem,
+          arasaacId: item._id
+        }))
+      });
+      
+      mostrarFeedback("Prancha enviada para o monitoramento!", 'sucesso');
       setListaSelecionados([]);
     } catch (err) {
+      console.error("Erro ao salvar:", err);
       mostrarFeedback("Erro ao salvar no banco. Tente novamente.", 'erro');
     } finally {
       setCarregando(false);
@@ -93,11 +103,13 @@ export default function GerenciadorCards({ paciente }: GerenciadorProps) {
         ) : (
           <div>
             <button onClick={() => setTela('categorias')} className="mb-4 text-blue-400 hover:underline">← Voltar</button>
-            <div className="grid grid-cols-3 gap-4">
-              {itens.slice(0, 15).map(item => (
-                <button key={item._id} onClick={() => selecionarItem(item)} className="bg-white p-2 rounded-xl text-black flex flex-col items-center hover:scale-105 transition">
-                  <img src={`https://static.arasaac.org/pictograms/${item._id}/${item._id}_300.png`} className="w-16 h-16 object-contain" />
-                  <p className="font-bold text-xs mt-1 capitalize">{item.keywords?.[0]?.keyword || 'Item'}</p>
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+              {itens.slice(0, 16).map(item => (
+                <button key={item._id} onClick={() => selecionarItem(item)} className="hover:scale-105 transition">
+                  <CardExibicao 
+                    label={item.keywords?.[0]?.keyword || 'Item'} 
+                    arasaacId={item._id} 
+                  />
                 </button>
               ))}
             </div>
@@ -105,22 +117,22 @@ export default function GerenciadorCards({ paciente }: GerenciadorProps) {
         )}
       </div>
 
+      {/* Painel Lateral da Prancha */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 h-fit shadow-sm">
         <h3 className="text-lg font-bold mb-4 text-slate-800">Prancha ({listaSelecionados.length}/10)</h3>
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-4">
           {listaSelecionados.map((item) => (
-            <div key={item._id} className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-              <img src={`https://static.arasaac.org/pictograms/${item._id}/${item._id}_300.png`} className="w-10 h-10 object-contain" />
-              
-              <div className="flex-1 flex flex-col">
-                <span className="font-bold text-sm text-slate-900 capitalize">{item.nomeFormatado}</span>
-                {/* Aqui está a categoria adicionada */}
-                <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full w-fit uppercase font-bold tracking-wider mt-0.5">
-                  {item.categoriaOrigem}
-                </span>
-              </div>
-              
-              <button onClick={() => removerItem(item._id)} className="text-red-500 hover:text-red-700 p-2 text-lg font-bold">✕</button>
+            <div key={item._id} className="relative group">
+              <CardExibicao 
+                label={item.nomeFormatado} 
+                arasaacId={item._id} 
+              />
+              <button 
+                onClick={() => removerItem(item._id)} 
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-md hover:bg-red-600"
+              >
+                ✕
+              </button>
             </div>
           ))}
         </div>

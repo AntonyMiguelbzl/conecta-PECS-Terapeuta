@@ -102,12 +102,6 @@ export default function CadastroPaciente() {
             <input className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200" type="password" value={form.senha} onChange={e => setForm({...form, senha: e.target.value})} />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1">Meio de Comunicação Preferencial</label>
-            <select className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200" value={form.meioComunicacao} onChange={e => setForm({...form, meioComunicacao: e.target.value})}>
-              <option>WhatsApp</option>
-              <option>E-mail</option>
-              <option>Telefone</option>
-            </select>
           </div>
           
           <div className="flex gap-3 mt-6">
