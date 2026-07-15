@@ -259,4 +259,4 @@ export default function GerenciadorCards({ paciente }: GerenciadorProps) {
       </div>
     </div>
   );
-}
+} 
