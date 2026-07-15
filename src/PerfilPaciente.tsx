@@ -11,8 +11,10 @@ interface Paciente {
   senha: string;
   nomePai: string;
   zapPai: string;
+  emailPai: string;
   nomeMae: string;
   zapMae: string;
+  emailMae: string;
 }
 
 export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
@@ -36,8 +38,10 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
           senha: data.senha || '',
           nomePai: data.nomePai || '',
           zapPai: data.zapPai || '',
+          emailPai: data.emailPai || '',
           nomeMae: data.nomeMae || '',
-          zapMae: data.zapMae || ''
+          zapMae: data.zapMae || '',
+          emailMae: data.emailMae || ''
         } as Paciente);
       }
 
@@ -58,8 +62,10 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
         senhaApp: paciente.senha,
         nomePai: paciente.nomePai,
         zapPai: paciente.zapPai,
+        emailPai: paciente.emailPai,
         nomeMae: paciente.nomeMae,
-        zapMae: paciente.zapMae
+        zapMae: paciente.zapMae,
+        emailMae: paciente.emailMae
       });
       setEditando(false);
       toast.success('Perfil atualizado com sucesso!');
@@ -68,26 +74,18 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
     }
   };
 
-const confirmarExclusao = async () => {
+  const confirmarExclusao = async () => {
     try {
-      // 1. Referência para a coleção de cartões
       const cartoesRef = collection(db, 'cartoes_customizados');
-      
-      // 2. Busca todos os cartões vinculados a este paciente
       const q = query(cartoesRef, where('paciente_id', '==', pacienteId));
       const snapshot = await getDocs(q);
-
-      // 3. Usa um "Batch" (lote) para deletar tudo de uma vez
       const batch = writeBatch(db);
       
       snapshot.forEach((docSnapshot) => {
         batch.delete(docSnapshot.ref);
       });
 
-      // 4. Deleta o paciente
       batch.delete(doc(db, 'pacientes', pacienteId));
-
-      // 5. Executa no Firebase
       await batch.commit();
 
       toast.success('Paciente e histórico removidos com sucesso.');
@@ -104,7 +102,6 @@ const confirmarExclusao = async () => {
     <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
       <Toaster position="top-right" />
 
-      {/* Modal de Confirmação */}
       {mostrarModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl">
@@ -156,19 +153,20 @@ const confirmarExclusao = async () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
           <div>
             <label className="block text-sm font-semibold text-blue-600 mb-1">Nome do Pai</label>
-            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200" value={paciente.nomePai || ''} onChange={e => setPaciente({...paciente, nomePai: e.target.value})} disabled={!editando} />
+            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 mb-2" value={paciente.nomePai || ''} onChange={e => setPaciente({...paciente, nomePai: e.target.value})} disabled={!editando} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">WhatsApp do Pai</label>
+            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 mb-2" value={paciente.zapPai || ''} onChange={e => setPaciente({...paciente, zapPai: e.target.value})} disabled={!editando} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">E-mail do Pai</label>
+            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200" value={paciente.emailPai || ''} onChange={e => setPaciente({...paciente, emailPai: e.target.value})} disabled={!editando} />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-blue-600 mb-1">WhatsApp do Pai</label>
-            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200" value={paciente.zapPai || ''} onChange={e => setPaciente({...paciente, zapPai: e.target.value})} disabled={!editando} />
-          </div>
+
           <div>
             <label className="block text-sm font-semibold text-pink-600 mb-1">Nome da Mãe</label>
-            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200" value={paciente.nomeMae || ''} onChange={e => setPaciente({...paciente, nomeMae: e.target.value})} disabled={!editando} />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-pink-600 mb-1">WhatsApp da Mãe</label>
-            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200" value={paciente.zapMae || ''} onChange={e => setPaciente({...paciente, zapMae: e.target.value})} disabled={!editando} />
+            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 mb-2" value={paciente.nomeMae || ''} onChange={e => setPaciente({...paciente, nomeMae: e.target.value})} disabled={!editando} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">WhatsApp da Mãe</label>
+            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 mb-2" value={paciente.zapMae || ''} onChange={e => setPaciente({...paciente, zapMae: e.target.value})} disabled={!editando} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">E-mail da Mãe</label>
+            <input className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200" value={paciente.emailMae || ''} onChange={e => setPaciente({...paciente, emailMae: e.target.value})} disabled={!editando} />
           </div>
         </div>
       </div>
@@ -182,14 +180,12 @@ const confirmarExclusao = async () => {
         </button>
       </div>
 
-      
       <h3 className="text-lg font-bold mb-4 mt-8">Histórico de Pranchas</h3>
       <div className="space-y-3">
         {historico.length > 0 ? (
           historico.map(card => (
             <div key={card.id} className="bg-slate-50 p-4 rounded-xl flex items-center justify-between border border-slate-100">
               <div className="flex items-center gap-4">
-                {/* Imagem do item (usando o arasaacId salvo no banco) */}
                 <img 
                   src={`https://static.arasaac.org/pictograms/${card.arasaacId}/${card.arasaacId}_300.png`} 
                   alt={card.label} 
@@ -197,7 +193,6 @@ const confirmarExclusao = async () => {
                 />
                 <div className="flex flex-col">
                   <span className="font-bold text-slate-800 capitalize">{card.label}</span>
-                  {/* Categoria do item */}
                   <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full w-fit uppercase font-bold tracking-wider mt-0.5">
                     {card.categoria || 'Sem categoria'}
                   </span>

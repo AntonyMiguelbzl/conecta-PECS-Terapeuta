@@ -1,24 +1,51 @@
 import { useState } from 'react';
 import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import CardExibicao from '../CardExibicao'; // <--- Importe seu componente
+import CardExibicao from '../CardExibicao'; 
 
 interface Paciente { id: string; nome: string; }
 interface GerenciadorProps { paciente: Paciente; }
 
-const TERMOS_CATEGORIAS = ['alimento', 'fruta', 'brinquedo', 'escola', 'casa', 'sentimento', 'verbo', 'pessoa'];
+// Categorias atualizadas para melhor resultado na API do ARASAAC
+const CATEGORIAS_CONFIG = [
+  { label: 'Início', termo: 'casa' },
+  { label: 'Essenciais', termo: 'rotina' },
+  { label: 'Comer', termo: 'comer' },
+  { label: 'Brincar', termo: 'brincar' },
+  { label: 'Ir', termo: 'ir' },
+  { label: 'Sentir', termo: 'sentimento' },
+  { label: 'Família', termo: 'familia' },
+  { label: 'Sobre', termo: 'eu' }
+];
 
 export default function GerenciadorCards({ paciente }: GerenciadorProps) {
   const [tela, setTela] = useState<'categorias' | 'itens'>('categorias');
   const [itens, setItens] = useState<any[]>([]);
   const [categoriaAtual, setCategoriaAtual] = useState<string>('');
   const [listaSelecionados, setListaSelecionados] = useState<any[]>([]);
+  const [termoBusca, setTermoBusca] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [feedback, setFeedback] = useState<{ mensagem: string; tipo: 'sucesso' | 'erro' } | null>(null);
 
   const mostrarFeedback = (mensagem: string, tipo: 'sucesso' | 'erro') => {
     setFeedback({ mensagem, tipo });
     setTimeout(() => setFeedback(null), 3000);
+  };
+
+  // Função centralizada para buscar na API (usada por categorias e pelo buscador)
+  const buscarNaApi = async (termo: string, label: string) => {
+    try {
+      setCarregando(true);
+      const res = await fetch(`https://api.arasaac.org/v1/pictograms/pt/search/${termo}`);
+      const data = await res.json();
+      setItens(Array.isArray(data) ? data : []);
+      setCategoriaAtual(label);
+      setTela('itens');
+    } catch { 
+      mostrarFeedback("Erro ao buscar itens. Tente novamente.", "erro"); 
+    } finally {
+      setCarregando(false);
+    }
   };
 
   const selecionarItem = (item: any) => {
@@ -65,7 +92,7 @@ export default function GerenciadorCards({ paciente }: GerenciadorProps) {
         }))
       });
       
-      mostrarFeedback("Prancha enviada para o monitoramento!", 'sucesso');
+      mostrarFeedback("Prancha enviada com sucesso!", 'sucesso');
       setListaSelecionados([]);
     } catch (err) {
       console.error("Erro ao salvar:", err);
@@ -86,23 +113,38 @@ export default function GerenciadorCards({ paciente }: GerenciadorProps) {
       <div className="lg:col-span-2 bg-slate-900 p-6 rounded-2xl text-white">
         <h2 className="text-2xl font-bold mb-4">Gerenciando: {paciente.nome}</h2>
         
+        {/* BUSCADOR */}
+        <div className="flex gap-2 mb-6">
+<input 
+  className="flex-1 p-3 rounded-xl bg-white text-slate-900 placeholder-slate-400 border border-slate-300" 
+  placeholder="Pesquisar item específico..." 
+  value={termoBusca} 
+  onChange={(e) => setTermoBusca(e.target.value)}
+/>
+          <button 
+            onClick={() => termoBusca && buscarNaApi(termoBusca, `Busca: ${termoBusca}`)} 
+            className="bg-blue-600 px-6 py-3 rounded-xl font-bold hover:bg-blue-500 transition"
+          >
+            Buscar
+          </button>
+        </div>
+        
         {tela === 'categorias' ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {TERMOS_CATEGORIAS.map(termo => (
-              <button key={termo} onClick={async () => {
-                try {
-                  const res = await fetch(`https://api.arasaac.org/v1/pictograms/pt/search/${termo}`);
-                  const data = await res.json();
-                  setItens(Array.isArray(data) ? data : []);
-                  setCategoriaAtual(termo);
-                  setTela('itens');
-                } catch { mostrarFeedback("Erro na API", "erro"); }
-              }} className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition capitalize font-medium">{termo}</button>
+            {CATEGORIAS_CONFIG.map(cat => (
+              <button 
+                key={cat.termo} 
+                onClick={() => buscarNaApi(cat.termo, cat.label)} 
+                className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition font-bold"
+              >
+                {cat.label}
+              </button>
             ))}
           </div>
         ) : (
           <div>
-            <button onClick={() => setTela('categorias')} className="mb-4 text-blue-400 hover:underline">← Voltar</button>
+            <button onClick={() => setTela('categorias')} className="mb-4 text-blue-400 hover:underline">← Voltar para Categorias</button>
+            <h3 className="text-xl font-bold mb-4 capitalize">Resultados: {categoriaAtual}</h3>
             <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
               {itens.slice(0, 16).map(item => (
                 <button key={item._id} onClick={() => selecionarItem(item)} className="hover:scale-105 transition">
