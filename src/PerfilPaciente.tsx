@@ -25,6 +25,10 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
   const [verSenha, setVerSenha] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
 
+  // Novos estados para o filtro por período no histórico
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
+
   useEffect(() => {
     const carregarDados = async () => {
       if (!pacienteId) return;
@@ -96,6 +100,23 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
     
     carregarDados();
   }, [pacienteId]);
+
+  // Lógica de filtro do histórico por período (Data Início e Data Fim)
+  const historicoFiltrado = historico.filter(card => {
+    const dataAlvoStr = card.deletadoEm || card.criadoEm;
+    if (!dataAlvoStr) return !dataInicio && !dataFim;
+
+    const dataItem = new Date(dataAlvoStr).toISOString().split('T')[0];
+
+    if (dataInicio && dataFim) {
+      return dataItem >= dataInicio && dataItem <= dataFim;
+    } else if (dataInicio) {
+      return dataItem >= dataInicio;
+    } else if (dataFim) {
+      return dataItem <= dataFim;
+    }
+    return true;
+  });
 
   const salvarEdicao = async () => {
     if (!paciente) return;
@@ -251,16 +272,39 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
         )}
       </div>
 
-      {/* SEÇÃO: HISTÓRICO DE ALTERAÇÕES (UNIÃO DOS ATIVOS COM EXCLUÍDOS) */}
+      {/* SEÇÃO: HISTÓRICO DE ALTERAÇÕES COM FILTRO POR PERÍODO */}
       <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800">
         <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         Histórico de Alterações (Adições e Exclusões)
       </h3>
+
+      {/* Inputs de Filtro por Período */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 mb-1">Data Início</label>
+          <input 
+            type="date" 
+            value={dataInicio} 
+            onChange={e => setDataInicio(e.target.value)}
+            className="w-full bg-white p-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 mb-1">Data Fim</label>
+          <input 
+            type="date" 
+            value={dataFim} 
+            onChange={e => setDataFim(e.target.value)}
+            className="w-full bg-white p-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          />
+        </div>
+      </div>
+
       <div className="space-y-3">
-        {historico.length > 0 ? (
-          historico.map(card => {
+        {historicoFiltrado.length > 0 ? (
+          historicoFiltrado.map(card => {
             const isExcluido = card.isExcluido;
             
             return (
@@ -319,7 +363,9 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
             );
           })
         ) : (
-          <p className="text-sm text-slate-400">Nenhum histórico de alterações registrado.</p>
+          <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p className="text-sm text-slate-500 font-medium">Nenhum registro encontrado na parte de procurar por periodo</p>
+          </div>
         )}
       </div>
     </div>
