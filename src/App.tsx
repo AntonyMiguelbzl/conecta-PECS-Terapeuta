@@ -105,7 +105,11 @@ export default function App() {
                 <button onClick={() => setAbaTerapeuta("lista")} className={`px-4 py-2 rounded-xl text-sm font-medium transition ${abaTerapeuta === "lista" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-100"}`}>📋 Meus Pacientes</button>
                 <button onClick={() => setAbaTerapeuta("cadastro")} className={`px-4 py-2 rounded-xl text-sm font-medium transition ${abaTerapeuta === "cadastro" ? "bg-blue-600 text-white" : "bg-white text-slate-500 hover:bg-slate-100"}`}>➕ Cadastrar Paciente</button>
               </nav>
-              {abaTerapeuta === "lista" ? <ListaPacientes onSelecionarPaciente={setPacienteSelecionado} /> : <CadastroPaciente />}
+              {abaTerapeuta === "lista" ? (
+                <ListaPacientes onSelecionarPaciente={setPacienteSelecionado} />
+              ) : (
+                <CadastroPaciente onCadastroSucesso={() => setAbaTerapeuta("lista")} />
+              )}
             </>
           )
         ) : statusTerapeuta === 'reprovado' ? (
