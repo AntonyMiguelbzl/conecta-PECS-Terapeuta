@@ -19,7 +19,7 @@ interface Paciente {
 
 interface PerfilPacienteProps {
   pacienteId: string;
-  aoVoltar?: () => void; // Adicionado para suportar o retorno correto pelo estado do App
+  aoVoltar?: () => void; 
 }
 
 export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteProps) {
@@ -29,6 +29,9 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
   const [editando, setEditando] = useState(false);
   const [verSenha, setVerSenha] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
+  
+  // Novo estado de trava para evitar spam de cliques na exclusão
+  const [excluindo, setExcluindo] = useState(false);
 
   // Novos estados para o filtro por período no histórico
   const [dataInicio, setDataInicio] = useState('');
@@ -153,6 +156,11 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
   };
 
   const confirmarExclusao = async () => {
+    // Se já estiver excluindo, barra qualquer clique duplo / spam adicional imediatamente
+    if (excluindo) return;
+
+    setExcluindo(true);
+
     try {
       const cartoesRef = collection(db, 'cartoes_customizados');
       const q = query(cartoesRef, where('paciente_id', '==', pacienteId));
@@ -168,18 +176,18 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
 
       toast.success('Paciente e histórico removidos com sucesso.');
       
-      // Retorna para a tela de listagem de pacientes instantaneamente sem usar URLs inválidas
       setTimeout(() => {
         if (aoVoltar) {
           aoVoltar();
         } else {
-          window.location.reload(); // fallback de segurança caso a função não seja passada
+          window.location.reload(); 
         }
       }, 1000);
 
     } catch (error) {
       console.error("Erro ao excluir:", error);
       toast.error('Erro ao excluir dados vinculados.');
+      setExcluindo(false); // Destrava apenas se acontecer algum erro para permitir tentar novamente
     }
   };
 
@@ -189,7 +197,6 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
     <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm relative">
       <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
 
-      {/* Botão de voltar para a listagem caso o terapeuta queira sair sem excluir */}
       {aoVoltar && (
         <button 
           onClick={aoVoltar} 
@@ -207,15 +214,21 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
             <div className="flex gap-3">
               <button 
                 onClick={() => setMostrarModal(false)} 
+                disabled={excluindo}
                 className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
               >
                 Cancelar
               </button>
               <button 
                 onClick={confirmarExclusao} 
-                className="flex-1 py-2.5 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition shadow-lg shadow-red-600/20"
+                disabled={excluindo}
+                className={`flex-1 py-2.5 rounded-xl font-bold text-white transition shadow-lg ${
+                  excluindo 
+                    ? 'bg-red-400 cursor-not-allowed shadow-none' 
+                    : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'
+                }`}
               >
-                Excluir
+                {excluindo ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>
           </div>
@@ -287,7 +300,6 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
         </button>
       </div>
 
-      {/* SEÇÃO EXTRA: GRADE VISUAL DA PRANCHA ATUAL */}
       <h3 className="text-lg font-bold mb-4 mt-8 flex items-center gap-2 text-slate-800">
         <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
         Prancha Ativa (O que está no app agora)
@@ -312,7 +324,6 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
         )}
       </div>
 
-      {/* SEÇÃO: HISTÓRICO DE ALTERAÇÕES COM FILTRO POR PERÍODO */}
       <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800">
         <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -320,7 +331,6 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
         Histórico de Alterações (Adições e Exclusões)
       </h3>
 
-      {/* Inputs de Filtro por Período */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
         <div>
           <label className="block text-xs font-semibold text-slate-600 mb-1">Data Início</label>
