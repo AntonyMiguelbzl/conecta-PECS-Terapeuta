@@ -29,11 +29,22 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
 
+  // Trava o scroll da página de fundo exatamente onde o usuário está
+  useEffect(() => {
+    if (mostrarModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mostrarModal]);
+
   useEffect(() => {
     const carregarDados = async () => {
       if (!pacienteId) return;
       
-      // Carrega dados do Paciente
       const docRef = await getDoc(doc(db, 'pacientes', pacienteId));
       if (docRef.exists()) {
         const data = docRef.data();
@@ -53,7 +64,6 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
       }
 
       try {
-        // 1. Busca os cartões que estão ATIVOS no momento
         const qAtivos = query(collection(db, 'cartoes_customizados'), where('paciente_id', '==', pacienteId));
         const querySnapshotAtivos = await getDocs(qAtivos);
         const ativos = querySnapshotAtivos.docs.map(doc => ({ 
@@ -62,10 +72,8 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
           ...doc.data() 
         }));
         
-        // Atualiza o estado dos ativos para a exibição em grid
         setCartoesAtivos(ativos);
 
-        // 2. Busca os logs de cartões que já foram EXCLUÍDOS
         const qExcluidos = query(
           collection(db, 'historico'), 
           where('paciente_id', '==', pacienteId),
@@ -80,12 +88,11 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
             arasaacId: data.arasaacId,
             categoria: data.categoria,
             criadoEm: data.criadoEm || null,
-            deletadoEm: data.timestamp || null, // Data em que foi excluído
+            deletadoEm: data.timestamp || null,
             isExcluido: true
           };
         });
 
-        // 3. Une as duas listas e ordena pela data mais recente (deletadoEm ou criadoEm)
         const totalHistorico = [...ativos, ...excluidos].sort((a: any, b: any) => {
           const dataA = new Date(a.deletadoEm || a.criadoEm || 0).getTime();
           const dataB = new Date(b.deletadoEm || b.criadoEm || 0).getTime();
@@ -101,7 +108,6 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
     carregarDados();
   }, [pacienteId]);
 
-  // Lógica de filtro do histórico por período (Data Início e Data Fim)
   const historicoFiltrado = historico.filter(card => {
     const dataAlvoStr = card.deletadoEm || card.criadoEm;
     if (!dataAlvoStr) return !dataInicio && !dataFim;
@@ -155,8 +161,14 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
       batch.delete(doc(db, 'pacientes', pacienteId));
       await batch.commit();
 
+      // Mostra o alerta de sucesso
       toast.success('Paciente e histórico removidos com sucesso.');
-      window.location.href = '/pacientes'; 
+      
+      // Aguarda 1.5 segundos para a animação do toast completar antes de mudar de página
+      setTimeout(() => {
+        window.location.href = '/pacientes'; 
+      }, 1500);
+
     } catch (error) {
       console.error("Erro ao excluir:", error);
       toast.error('Erro ao excluir dados vinculados.');
@@ -166,17 +178,29 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
   if (!paciente) return <div className="p-4 text-slate-500">Carregando perfil...</div>;
 
   return (
-    <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
-      <Toaster position="top-right" />
+    <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm relative">
+      {/* Posição alterada para top-center */}
+      <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
 
+      {/* Modal corrigido: fixo cobrindo a tela inteira, centralizado e responsivo */}
       {mostrarModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-800 mb-2">Excluir Paciente?</h3>
-            <p className="text-slate-600 mb-6 text-sm">Esta ação é irreversível.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200 my-auto">
+            <h3 className="text-lg font-bold text-slate-800 mb-2">Deseja realmente excluir?</h3>
+            <p className="text-slate-600 mb-6 text-sm">Esta ação é irreversível e removerá todos os dados do paciente.</p>
             <div className="flex gap-3">
-              <button onClick={() => setMostrarModal(false)} className="flex-1 py-2 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Cancelar</button>
-              <button onClick={confirmarExclusao} className="flex-1 py-2 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700">Excluir</button>
+              <button 
+                onClick={() => setMostrarModal(false)} 
+                className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={confirmarExclusao} 
+                className="flex-1 py-2.5 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition shadow-lg shadow-red-600/20"
+              >
+                Excluir
+              </button>
             </div>
           </div>
         </div>
@@ -359,7 +383,7 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
                     Por: {card.autor || 'Terapeuta'}
                   </span>
                 </div>
-              </div>
+              </div>  
             );
           })
         ) : (
