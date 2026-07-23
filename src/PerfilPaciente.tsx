@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from './firebase';  
+import { db } from './firebase'; 
 import toast, { Toaster } from 'react-hot-toast';
 
 interface Paciente {
@@ -17,7 +17,12 @@ interface Paciente {
   emailMae: string;
 }
 
-export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
+interface PerfilPacienteProps {
+  pacienteId: string;
+  aoVoltar?: () => void; // Adicionado para suportar o retorno correto pelo estado do App
+}
+
+export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteProps) {
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [cartoesAtivos, setCartoesAtivos] = useState<any[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
@@ -161,13 +166,16 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
       batch.delete(doc(db, 'pacientes', pacienteId));
       await batch.commit();
 
-      // Mostra o alerta de sucesso
       toast.success('Paciente e histórico removidos com sucesso.');
       
-      // Aguarda 1.5 segundos para a animação do toast completar antes de mudar de página
+      // Retorna para a tela de listagem de pacientes instantaneamente sem usar URLs inválidas
       setTimeout(() => {
-        window.location.href = '/pacientes'; 
-      }, 1500);
+        if (aoVoltar) {
+          aoVoltar();
+        } else {
+          window.location.reload(); // fallback de segurança caso a função não seja passada
+        }
+      }, 1000);
 
     } catch (error) {
       console.error("Erro ao excluir:", error);
@@ -179,10 +187,18 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
 
   return (
     <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm relative">
-      {/* Posição alterada para top-center */}
       <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
 
-      {/* Modal corrigido: fixo cobrindo a tela inteira, centralizado e responsivo */}
+      {/* Botão de voltar para a listagem caso o terapeuta queira sair sem excluir */}
+      {aoVoltar && (
+        <button 
+          onClick={aoVoltar} 
+          className="mb-6 flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600 transition"
+        >
+          &larr; Voltar para Meus Pacientes
+        </button>
+      )}
+
       {mostrarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200 my-auto">
@@ -383,7 +399,7 @@ export default function PerfilPaciente({ pacienteId }: { pacienteId: string }) {
                     Por: {card.autor || 'Terapeuta'}
                   </span>
                 </div>
-              </div>  
+              </div> 
             );
           })
         ) : (
