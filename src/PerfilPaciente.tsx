@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from './firebase'; 
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 interface Paciente {
   id: string;
@@ -200,7 +200,6 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
 
   return (
     <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm relative">
-      <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
 
       {aoVoltar && (
         <button 
