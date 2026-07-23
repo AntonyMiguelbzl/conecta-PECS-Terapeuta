@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from './firebase'; 
 import toast, { Toaster } from 'react-hot-toast';
@@ -30,8 +30,11 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
   const [verSenha, setVerSenha] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
   
-  // Novo estado de trava para evitar spam de cliques na exclusão
+  // Estado de trava visual para o botão
   const [excluindo, setExcluindo] = useState(false);
+
+  // Trava síncrona com useRef para bloquear cliques múltiplos instantaneamente na Vercel
+  const jaExcluindoRef = useRef(false);
 
   // Novos estados para o filtro por período no histórico
   const [dataInicio, setDataInicio] = useState('');
@@ -156,8 +159,9 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
   };
 
   const confirmarExclusao = async () => {
-    // Se já estiver excluindo, barra qualquer clique duplo / spam adicional imediatamente
-    if (excluindo) return;
+    // Bloqueio síncrono imediato para evitar múltiplos cliques na Vercel
+    if (jaExcluindoRef.current) return;
+    jaExcluindoRef.current = true;
 
     setExcluindo(true);
 
@@ -187,7 +191,8 @@ export default function PerfilPaciente({ pacienteId, aoVoltar }: PerfilPacienteP
     } catch (error) {
       console.error("Erro ao excluir:", error);
       toast.error('Erro ao excluir dados vinculados.');
-      setExcluindo(false); // Destrava apenas se acontecer algum erro para permitir tentar novamente
+      jaExcluindoRef.current = false; // Libera a trava em caso de erro
+      setExcluindo(false); 
     }
   };
 
