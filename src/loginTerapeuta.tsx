@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { auth } from './firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import toast from 'react-hot-toast';
+import imagemFundo from './assets/Terapeuta.jpeg';
 
 interface LoginTerapeutaProps {
   onIrParaCadastro: () => void;
@@ -54,60 +55,68 @@ export default function LoginTerapeuta({ onIrParaCadastro }: LoginTerapeutaProps
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 border border-slate-100">
-        
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-800">Conecta PECS</h1>
-          <p className="text-sm text-slate-500 mt-1">Painel de Controle do Terapeuta</p>
-        </div>
+    <div className="relative min-h-screen w-full overflow-hidden bg-slate-950">
+      <img
+        src={imagemFundo}
+        alt="Imagem de fundo"
+        className="absolute inset-0 h-full w-full object-cover object-[center_10%]"
+      />
+      <div className="absolute inset-0 bg-black/45" />
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-              E-mail Profissional
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="exemplo@terapia.com"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700 transition"
-            />
+      <div className="relative z-10 flex min-h-screen items-center justify-end px-2 py-4 sm:px-4 sm:py-6 lg:px-60 lg:py-10">
+        <div className="w-full max-w-xl rounded-3xl border border-white/20 bg-white/95 p-10 shadow-2xl backdrop-blur-md sm:p-12 lg:p-14">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-slate-800">Conecta PECS</h1>
+            <p className="text-sm text-slate-500 mt-1">Painel de Controle do Terapeuta</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-              Senha
-            </label>
-            <input
-              type="password"
-              required
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700 transition"
-            />
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+                E-mail Profissional
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="exemplo@terapia.com"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700 transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+                Senha
+              </label>
+              <input
+                type="password"
+                required
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700 transition"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={carregando}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-blue-200 disabled:opacity-50 cursor-pointer"
+            >
+              {carregando ? 'Autenticando...' : 'Entrar no Painel'}
+            </button>
+          </form>
+
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={onIrParaCadastro}
+              className="w-full text-blue-600 text-sm hover:underline cursor-pointer"
+            >
+              Não tem conta? Cadastre-se aqui
+            </button>
           </div>
-
-          <button
-            type="submit"
-            disabled={carregando}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-blue-200 disabled:opacity-50 cursor-pointer"
-          >
-            {carregando ? 'Autenticando...' : 'Entrar no Painel'}
-          </button>
-        </form>
-
-        <div className="text-center mt-4">
-          <button 
-            type="button" 
-            onClick={onIrParaCadastro} 
-            className="w-full text-blue-600 text-sm hover:underline cursor-pointer"
-          >
-            Não tem conta? Cadastre-se aqui
-          </button>
         </div>
       </div>
     </div>
