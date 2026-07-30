@@ -52,7 +52,7 @@ export default function CadastroTerapeuta({ onVoltar }: CadastroTerapeutaProps) 
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-slate-950">
+    <div className="relative h-screen w-full overflow-hidden bg-slate-950">
       <img
         src={imagemFundo}
         alt="Imagem de fundo"
@@ -60,7 +60,7 @@ export default function CadastroTerapeuta({ onVoltar }: CadastroTerapeutaProps) 
       />
       <div className="absolute inset-0 bg-black/45" />
 
-      <div className="relative z-10 flex min-h-screen items-center justify-end px-2 py-4 sm:px-4 sm:py-6 lg:px-60 lg:py-8">
+      <div className="relative z-10 flex h-full items-center justify-end px-2 py-4 sm:px-4 sm:py-6 lg:px-60 lg:py-8">
         <div className="w-full max-w-xl rounded-3xl border border-white/20 bg-white/95 p-10 shadow-2xl backdrop-blur-md sm:p-12 lg:p-14">
           <div className="mb-6 text-center">
             <h2 className="text-2xl font-bold text-slate-800">Criar conta profissional</h2>

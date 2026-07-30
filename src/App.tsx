@@ -69,6 +69,17 @@ export default function App() {
     }
   }, [statusTerapeuta]);
 
+  useEffect(() => {
+    const deveFixarScroll = !usuario && (tela === "login" || tela === "cadastroTerapeuta");
+    document.body.style.overflow = deveFixarScroll ? "hidden" : "auto";
+    document.documentElement.style.overflow = deveFixarScroll ? "hidden" : "auto";
+
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [usuario, tela]);
+
   const handleSair = async () => { await signOut(auth); window.location.reload(); };
 
   if (estaCarregando) {
@@ -95,7 +106,7 @@ export default function App() {
         </button>
       </header>
 
-      <main className="flex-1 py-8 max-w-5xl mx-auto w-full px-4">
+      <main className="flex-1 min-h-0 py-8 max-w-5xl mx-auto w-full px-4 overflow-y-auto pb-10">
         {statusTerapeuta === 'aprovado' ? (
           pacienteSelecionado ? (
             <PainelPaciente paciente={pacienteSelecionado} aoVoltar={() => setPacienteSelecionado(null)} />
